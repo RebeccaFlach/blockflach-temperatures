@@ -304,7 +304,8 @@ var clickLineX = 0;
 var clickLineIndex = 0;
 var parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S");
 
-var get = $.get("http://10.10.10.10/retrieveTemps.php", function(data){
+//normally, the data is retrieved from a php script that gets from local database. For demonstration, it is getting a text file uploaded here 
+var get = $.get("https://raw.githubusercontent.com/RebeccaFlach/blockflach-temperature-graph/main/Tempdatajson.txt", function(data){ 
   arrData = JSON.parse(data);
 
 
