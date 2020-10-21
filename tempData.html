@@ -1,0 +1,563 @@
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<style>
+/*css isnt very neat or good, but it works! */
+body {
+    max-height: 100vh;
+}
+
+#legend {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: rgba(130, 130, 130, 0.4);
+  border: 1px solid rgba(130, 130, 130, 0.7);
+  border-radius: 2px;
+  padding: 5px;
+  height: auto;
+}
+
+#menu {
+  height: 110px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  text-align: center;
+  border-bottom: 2px solid rgba(130, 130, 130, 1);
+  margin: 0px;
+
+}
+.jump-arrow {
+  position: fixed;
+  font-size: 25px;
+  padding: 14px;
+}
+.jump-arrow i {
+  vertical-align: text-bottom;
+  font-size: 30px;
+}
+
+.jump-arrow p {
+  color: black;
+}
+
+#end-arrow {
+  top: 0;
+  right: 0;
+}
+
+#old-arrow {
+  top: 0;
+  left: 0;
+}
+
+#end {
+  visibility: hidden;
+}
+
+ul {
+    list-style-type: none;
+}
+.line-button {
+  height: 1em;
+  width: 1em;
+  margin-left: 0px;
+  border: none;
+}
+.line-button:focus {
+  outline: none;
+}
+.temperatures-list-item {
+  padding: 0px;
+  margin-left: 0px;
+}
+#temperatures-list {
+  padding-left: 2px;
+  margin-block-start: 0;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  text-align: left;
+}
+.dropdown-outer-div {
+  display: inline-block;
+}
+.dropdown-outer-div:hover .dropdown-content {
+  display: block;
+}
+.setting-btn {
+  border: none;
+  border-bottom: 1px solid rgba(130, 130, 130, 0.8);
+  padding: 8px;
+  width: 100%;
+  text-align: left;
+}
+.setting-btn:focus {
+  outline: none;
+}
+
+.setting-btn:hover {
+  background-color: rgba(130, 130, 130, 0.7)
+}
+.dropdown-btn {
+  border-radius: 0;
+  padding: 8px;
+  border: 1px solid rgba(130, 130, 130, 0.8);
+}
+#tooltip-buttons {
+  margin-right: 10px;
+}
+#scale-buttons {
+  margin-left: 10px;
+}
+
+@media(max-width: 700px){
+  #legend {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    background-color: rgba(130, 130, 130, 0.4);
+    border: 1px solid rgba(130, 130, 130, 0.7);
+    border-radius: 2px;
+    padding: 5px;
+    height: 150px;
+    display: grid;
+    grid-template-areas: "temperatures-list mobile-dropdown"
+                        "temperatures-list arrows";
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 50% 50%;
+  }
+  #date-time {margin: 0;}
+
+}
+#mobile-menu {
+  display: none;
+  font-size: 60px;
+  text-align: center;
+  color: black !important;
+  justify-content: center;
+  padding: 10px;
+
+}
+#loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#main-content {
+  display: none
+}
+</style>
+
+<body>
+<div id = "loader"></div>
+<div id="main-content">
+  <div id="menu">
+    <h2>The BlockFlach Temperature Project</h2>
+    <div id = "dropdowns">
+    <div id="tooltip-buttons" class="dropdown-outer-div">
+      <button id="tooltip-dropdown-btn" class="dropdown-btn">Tooltip<i class="fas fa-angle-down"></i></button>
+      <div id="tooltip-dropdown" class="dropdown-content">
+        <button id="none" class="tooltip-button setting-btn">None</button><br>
+        <button id="clickLine" class="tooltip-button setting-btn">Click line</button><br>
+        <button id="mouseCoords" class="tooltip-button setting-btn">Mouse coords</button><br>
+      </div>
+    </div>
+    <div id="scale-buttons" class="dropdown-outer-div">
+      <button id="scale-dropdown-btn" class="dropdown-btn">Scale<i class="fas fa-angle-down"></i></button>
+      <div id="scale-dropdown" class="dropdown-content">
+        <button id="day" value=1 class="scale-button setting-btn">Day</button><br>
+        <button id="week" value=7 class="scale-button setting-btn">Week</button><br>
+        <button id="month" value=30 class="scale-button setting-btn">Month</button><br>
+      </div>
+    </div>
+  </div>
+    <div id="end-arrow" class="jump-arrow end-jump">
+      <p>Most Recent <i class="fas fa-angle-right"></i></p>
+    </div>
+    <div id="old-arrow" class="jump-arrow old-jump">
+      <p><i class="fas fa-angle-left"></i>  Oldest</p>
+    </div>
+  </div>
+  <div id="chart"></div>
+  <div id='legend'>
+    <p id="date-time"></p>
+    <ul id="temperatures-list">
+    </ul>
+    <div id="mobile-menu">
+      <section class="mobile-arrow old-jump">
+        <i class="fas fa-angle-left"></i>
+      </section>
+      <section class="mobile-arrow end-jump">
+        <i class="fas fa-angle-right"></i>
+      </section>
+    </div>
+  </div>
+</div>
+</body>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="http://cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js"></script>
+<script>
+
+
+$("#log-scroll").click(function(){
+  $("#log-scroll").text($(window).scrollLeft())
+})
+var colors = [['green', 'red', 'blue', 'orange', 'purple', '#02ccc9', '#780e0e', '#380606', 'grey'],
+              ['Inside', 'Outside', 'Aquarium', 'RV', 'Shed', 'Pool', 'Upper-Heater', 'Lower-Heater', 'AC'],
+              ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+            ];
+
+var buttonColors = {
+  "Inside" : "green",
+  "Outside": "red",
+  "Aquarium": "blue",
+  "RV" : "orange",
+  "Shed": "purple",
+  "Pool": "#02ccc9",
+  "AC" : "grey",
+  "Upper-Heater": "#780e0e",
+  "Lower-Heater" : "#380606"
+}
+
+
+
+var topMargin = 110;
+var bottomMargin = 30;
+var leftMargin = 60;
+var responsiveHeight = window.innerHeight;
+
+if(window.innerWidth < 700){
+  responsiveHeight = window.innerHeight - 150;
+  topMargin = 10;
+  bottomMargin = 20;
+  leftMargin = 30;
+  $("#menu").css("display", "none");
+  $("#date-time").css("display", "none");
+  $("#dropdowns").appendTo("#legend");
+  $("#dropdowns").css("grid-area", "mobile-dropdown")
+  $("#mobile-menu").css("display", "flex");
+  $("#mobile-menu").css("grid-area", "arrows")
+}
+
+for(let i = 0; i < colors[1].length; i++) {//makes the legend buttons
+  $("#temperatures-list").append(`<li class="temperatures-list-item"><button id="${colors[1][i]}" value="on" name="line-${i + 1}" class="line-button"> </button>${colors[1][i]}<span id='${colors[1][i]}-tip'></span></li>`);
+  $("#" + colors[1][i]).css("background-color", colors[0][i]);
+}
+
+$(".line-button").click(function() {//removes and adds lines on click of button
+  if(this.value == "on"){
+    $("." + this.name).css("display", "none");
+    $("#" + this.id).prop("value", "off")
+    $("#" + this.id).css("background-color", "white");
+  }
+  else {
+    $("." + this.name).css("display", "initial");
+    $(this).prop("value", "on")
+    $("#" + this.id).css("background-color", buttonColors[this.id]);
+  }
+})
+
+
+//default settings
+var daysNumberShown = 1; //scaleTime
+var tooltipType = "clickLine"//click to move line
+
+var thermometersAmount = colors[0].length;
+var dataStorage;
+var dataLength = 0;
+var data;
+var arrData;
+var sumstat;
+var groupedByThermometer;
+var color;
+var clickLineX = 0;
+var clickLineIndex = 0;
+var parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S");
+
+var get = $.get("http://10.10.10.10/retrieveTemps.php", function(data){
+  arrData = JSON.parse(data);
+
+
+  data = arrData.map(function(i) {
+    return {key: i.key,
+    values:
+    i["values"].map(function(d){
+      return {
+        temperature_date_time: parseDate(d.temperature_date_time), //makes written date into date object, for time scaling
+        temperature: d.temperature,
+        thermometer_id: d.thermometer_id,
+        key: d.segment
+      };
+    })
+  }
+  });
+
+//variables are a bit weird here. I changed the data format, and this was the easiest way to not change variables throughout
+  dataStorage = data[0].values;
+  dataLength = data.length;
+  sumstat = data; //this holds the data grouped by segments
+
+
+  for (let i = 1; i < data.length; i++){
+    dataStorage = dataStorage.concat(data[i].values);
+  }
+  data = dataStorage; //raw data, ungrouped
+
+  groupedByThermometer = d3.nest() //grouped by thermometer, so lines can be added/removed
+  .key(function(d) {return d.thermometer_id;})
+  .entries(dataStorage);
+
+  var res = sumstat.map(function(d){ return d.key }) // list of group names
+  color = d3.scaleOrdinal()
+        .domain(colors[2])
+        .range(colors[0]);
+  graph(dataStorage);
+  });
+
+
+
+  $(".scale-button").click(function() {//changes scale on click
+    //gets position scrolled to before change, accounting for left margin
+    var originalScroll = x.invert($(window).scrollLeft() + window.innerWidth / 2 - leftMargin);
+    daysNumberShown = this.value;
+    var bisectedOrginalIndex  = bisect(dataStorage, originalScroll, 1);
+    $("#chart").empty(); //deletes old graph
+    graph(dataStorage); //graphs, with new width and scale
+    var scaledPosition = x(dataStorage[bisectedOrginalIndex].temperature_date_time);
+    $(window).scrollTo(scaledPosition - window.innerWidth / 2 + leftMargin);
+  })
+
+  $(".tooltip-button").click(function() { //changes clickline/mousecoords/none
+    tooltipType = this.id;
+    $("#chart").empty();
+    graph(dataStorage);
+  })
+
+var clearData = function() {
+  for(let j = 0; j < colors[0].length; j++) {
+  $("#" + colors[1][j] + "-tip").text('')
+  };
+}
+
+var x;
+var bisect;
+
+
+var graph = function(data){
+clearData();
+  var margin = {top: topMargin, right: 30, bottom: bottomMargin, left: leftMargin},
+    width = window.innerWidth / (144 * thermometersAmount * daysNumberShown) * data.length - margin.left - margin.right,
+    height =  responsiveHeight - margin.top - margin.bottom - 25;
+
+
+    $(".end-jump").click(function(){
+    $(window).scrollTo(width, 0);
+    });
+    $(".old-jump").click(function(){
+    $(window).scrollTo(0)
+    });
+
+
+  var svg = d3.select("#chart") //adds the svg
+                    .append("svg")
+                    .style("width", width + margin.left + margin.right + "px")
+                    .style("height", height + margin.top + margin.bottom + "px")
+                    .append("g")
+                    .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")")
+                    .attr("class", "svg")
+                    .style("overflow-x", "scroll")
+                    .attr("id", "#svg-g");
+
+  const tooltipLine = svg.append('line');
+
+      // Add X axis --> it is a date format
+   x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d.temperature_date_time; }))
+        .range([ 0, width]);
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x)
+        .ticks(width / 100));
+
+      // Add Y axis
+  var y = d3.scaleLinear()
+        .domain([30, d3.max(data, function(d) { return +d.temperature; }) + 10])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .call(d3.axisLeft(y))
+        .attr("id", "left-axis")
+        .attr("x", 3);
+
+        const line = d3.line().x(d => x(d.temperature_date_time)).y(d => y(d.temperature));
+
+      // Add the lines
+      svg.selectAll(".line")
+        .data(sumstat)
+        .enter()
+        .append("path")
+        .attr("class", function(d) {return "line-"+d.values[0].thermometer_id}) //class for adding/removing lines
+        .attr("fill", "none")
+        .attr("stroke", function(d){return color(d.values[0].thermometer_id)})
+        .attr("stroke-width", 2)
+        .attr("d", function(d){
+          return d3.line()
+          .x(function(d) {return x(d.temperature_date_time)})
+          .y(function(d) {return y(+d.temperature) })
+          (d.values)
+        });
+
+$("#main-content").css("display", "block"); //once everything ready, show it
+$("#loader").css("display", "none");
+
+
+    for(let i = 0; i < colors[1].length; i++) { //hides the lines that were turned off before switching scale
+        if($("#" + colors[1][i]).prop("value") == "off"){
+            $("." + $("#" + colors[1][i]).attr("name")).css("display", "none");
+          }
+        };
+
+        // This allows to find the closest X index of the mouse:
+    bisect = d3.bisector(function(d) { return d.temperature_date_time; }).left;
+
+    clickLineX = x(dataStorage[clickLineIndex].temperature_date_time); //the location of the moving line
+
+      // Creates the line/circle
+    if(tooltipType == "clickLine"){
+      var focus = svg
+        .append('g')
+        .append('rect')
+        .style("fill", "black")
+        .attr("stroke", "black")
+        .attr('width', 1)
+        .attr("height", height)
+        .attr("x", clickLineX)
+        .style("opacity", 0)
+        .attr("id", "tooltip-line");
+
+    }
+    else if(tooltipType == "mouseCoords") {
+      var focus = svg
+        .append('g')
+        .append('circle')
+        .style("fill", "none")
+        .attr("stroke", "black")
+        .attr('r', 4.5)
+        .style("opacity", 0)
+
+      }
+    var focusText = svg
+        .append('g')
+        .append("text")
+        .style("opacity", 0)
+        .attr("text-anchor", "left")
+      // Create the text that travels with the circle
+
+
+    svg //adds invisble rectangle over full thing to detect clicks
+            .append('rect')
+            .style("fill", "none")
+            .style("pointer-events", "all")
+            .attr('width', width)
+            .attr('height', height)
+            .on('mouseover', mouseover)
+            .on('click', clickLine)
+            .on('mousemove', mouseCoords)
+            .on('mouseout', mouseout);
+
+
+          // What happens when the mouse move/click
+    function mouseover() {
+          focus.style("opacity", 1)
+          focusText.style("opacity",1)
+    }
+
+    function mouseCoords() {
+          if(tooltipType == "mouseCoords") {
+              var timeFormat = d3.timeFormat("%m-%d %H:%M");
+              // recover coordinate we need
+              var x0 = x.invert(d3.mouse(this)[0]);
+              var y0 = y.invert(d3.mouse(this)[1]);
+              var i = bisect(data, x0, 1);
+              selectedData = data[i];
+
+              focus
+              .attr("cx", x(x0))
+              .attr("cy", y(y0));
+
+              focusText
+              .attr("x", x(x0))
+              .attr("y", y(y0))
+              .html(timeFormat(selectedData.temperature_date_time) + "  " + y0.toFixed(1));
+            }
+          }
+
+    function clickLine() {
+        if(tooltipType == "clickLine") {
+            var timeFormat = d3.timeFormat("%m-%d %H:%M");
+            // recover coordinate we need
+            var x0 = x.invert(d3.mouse(this)[0]);
+            var y0 = y.invert(d3.mouse(this)[1]);
+            var i = bisect(data, x0, 1);
+
+            selectedData = data[i];
+            $("#date-time").text(timeFormat(selectedData.temperature_date_time));
+            for(let j = 0; j < colors[0].length; j++) {
+              var tempCoord = bisect(groupedByThermometer[j].values, x0, 1);
+            $("#" + colors[1][j] + "-tip").text(': ' + groupedByThermometer[j].values[tempCoord].temperature)
+            };
+
+            focus
+              .attr("x", x(data[i].temperature_date_time))
+              .attr("y", 0);
+            clickLineIndex = i;
+            clickLineX = x(data[i].temperature_date_time);
+
+          /*  focusText
+              .attr("x", x(selectedData.temperature_date_time))
+              .attr("y", y(y0))
+              .html( timeFormat(selectedData.temperature_date_time)); */
+            }
+            }
+
+    function mouseout() {
+           if(tooltipType == "mouseCoords"){
+            focus.style("opacity", 0)
+            focusText.style("opacity", 0)
+          }
+        }
+}
+
+
+</script>
+</html>
