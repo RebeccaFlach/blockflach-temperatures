@@ -1,0 +1,254 @@
+<!DOCTYPE HTML><html>
+
+<!--
+This was one of my first ever coding projects!
+ I took a simple project I found online that just displayed the temperature from a single thermometers
+ and added different things to practice what I was learning
+ The temperatures come from a bunch of arduino sensors around the house
+
+-->
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <style>
+      body {
+
+        text-align: center;
+      }
+      #errorMessage {
+        margin: 35% 20px auto 20px;
+      }
+      #errorMessage i {
+        color: red;
+        font-size: 3.5rem;
+      }
+      #errorMessage h1 {
+        font-size: 2rem;
+      }
+
+      #tempDiv {
+        display: inline-block;
+        background-color: white;
+        height: 100%;
+        margin: 0px;
+        min-width: 40vw;
+        padding: 20px;
+      }
+      #leftBackground{
+        max-width: 20%;
+      }
+      #rightBackground{
+
+        max-width: 20%;
+      }
+      body {
+        background-image: none;
+        height: 100vh;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      html {
+        font-family: Arial;
+        display: inline-block;
+        margin: 0px auto;
+        text-align: center;
+      }
+      h2 { font-size: 3.0rem; }
+      p { font-size: 3.0rem; }
+      .units { font-size: 1.2rem; }
+      .ds-labels{
+        font-size: 1.5rem;
+        vertical-align: middle;
+        padding-bottom: 15px;
+      }
+      @media (max-width: 500px){
+        p {
+        font-size: 4vh;
+        }
+      }
+
+
+  </style>
+</head>
+<body id = "body">
+  <div class = "background" id = "leftBackground"></div>
+  <div id = "tempDiv">
+  <h1><u id = "header">Temperatures</u></h1>
+    <!--this is filled by the setHtml function -->
+  </div>
+  <div class = "background" id = "rightBackground"></div>
+</body>
+<script src="http://10.10.10.10/suncalc.js"></script> <!--for sunMoon func -->
+<script src="http://10.10.10.10/hebcal.min.js"></script> <!--for converting Jewish holiday dates to our calendar -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+<script>
+//important stuff \/
+function setHtml(label, icon){ // adds html that displays a temp to the tempDiv
+  let html =  `<p>
+    <i id="icon${label}"class="fas fa-${icon}"></i>
+    <span class="ds-labels">${label}</span>
+    <span id= "htmlId${label}">Loading...</span>
+    <sup class="units">&deg;F</sup>
+  </p>`
+  $("#tempDiv").append(html)
+};
+
+var errorCount = 0;
+function callTemp(url, htmlId, iconId){ // gets the temp from the thermometor, and calls the setColor function.
+//original thermometer project, rewritten w/ jquery
+ var get = $.get("http://10.10.10." + url, function(data, status){
+    data *= 1;
+    $("#" + htmlId).text(data.toFixed(1));
+    setColor(iconId, data);
+    if (data >= 110 && holiday() == false){//fire background when really hot
+      $("body").css("background-image", "url(https://i.pinimg.com/originals/95/64/f9/9564f9e0286d1bec5ed420533f4c9a08.png)");
+    }
+    else if (holiday() == false){
+      $("body").css("background-image", "none")
+    }
+ })
+  .fail(function(){
+    errorCount += 1;
+    $("#" + htmlId).text("Error :(");
+    setColor(iconId, status);
+    if (errorCount == array.length){ //if all thermometers disconnected, probably no connection
+      errorCount = 0;
+      $("#tempDiv").html(function(n){
+      return "<div id='errorMessage'><i class='fas fa-exclamation-triangle'</i><br><h1>No Connection</h1></div>";
+    });
+    }
+  })
+};
+var date = new Date();
+var array = [//address(not including 10.10.10.), name to be displayed, fontawesome icon name
+  //definetly should have been an associative array, but too much work to change now
+              ["121/sensor_one", "Inside", "home"],
+              ["122/temperaturef", "Outside", ""],
+              ["123/temperaturef", "RV", "truck"],
+              ["124/temperaturef", "Shed", "warehouse"],
+              ["121/sensor_two", "Aquarium", "fish"],
+              ["125/temperaturef", "Pool", "swimmer"]
+            ];
+
+function callAllTempsInitial(){
+  for (let i = 0; i < array.length; i++){
+    setHtml(array[i][1], array[i][2]);
+    callTemp(array[i][0], "htmlId" + array[i][1], "icon" + array[i][1]); //calls when page is first loaded
+  };
+};
+
+function callAllTemps(){
+  errorCount = 0;
+  for (let i = 0; i < array.length; i++){
+     callTemp(array[i][0], "htmlId" + array[i][1], "icon" + array[i][1]);
+  };
+};
+
+//below is mostly aesthetic stuff
+
+function sunMoon(){ //changes the outside icon between a sun and a moon depending on time
+  //also controls dark mode
+  var times = SunCalc.getTimes(new Date(), 32.29, -110.79);
+  if(new Date() < times.sunset && new Date() > times.sunrise){ //daytime
+    document.getElementById("iconOutside").className = "fas fa-sun";
+    $("body").css("background-color", "white");
+    $("#tempDiv").css("background-color", "white");
+    $("body").css("color", "black");
+  }
+  else { //night
+    document.getElementById("iconOutside").className = "fas fa-moon";
+    $("body").css("background-color", "#222831");
+    $("#tempDiv").css("background-color", "#222831");
+    $("body").css("color", "#f0f0f0");
+  }
+};
+
+function setColor(iconId, temperature){ // this changes the thermometer sybmol's color based on the temp
+  if (typeof temperature !== "number"){$("#" + iconId).css("color", "black");}
+  else{
+    if (temperature >= 100){$("#" + iconId).css("color", "#ff0000")}
+    else if(temperature >= 90){$("#" + iconId).css("color", "#fc6f03")}
+    else if(temperature >= 80){$("#" + iconId).css("color", "#facd02")}
+    else if(temperature >= 70){$("#" + iconId).css("color", "#33ff00")}
+    else if(temperature >= 60){$("#" + iconId).css("color", "#94ffcf")}
+    else if(temperature >= 50){$("#" + iconId).css("color", "#5ad5e0")}
+    else if(temperature >= 40){$("#" + iconId).css("color", "#216bff")}
+    else if(temperature >= 30){$("#" + iconId).css("color", "#0d00ff")}
+    else if(temperature < 30){$("#" + iconId).css("color", "#7619c2")}
+    else {$("#" + iconId).css("color", "black")}
+  }
+};
+
+function stupidDates(month, dayIndex, addNum){//calculates dates of holidays that fall on "the second sunday of may" for example. used in holiday function
+ //addNum is the number of days between the first occurence of the day and the holiday(21 for thanksgiving bcs 4th thurs of month)
+//dayInex is num representing day of week. sunday = 0
+  var date = 1;
+  var i = 1;
+  var firstOccurence = 0;
+  while (firstOccurence == 0){
+    var test = new Date(month + " " + i + ', ' + date.getFullYear() );
+    if(test.getDay() == dayIndex){
+      firstOccurence = i;
+      return i + addNum
+    }
+    else {i += 1}
+  };
+};
+
+function holiday(){//changes the background and header for holidays
+  var hebDate = new Hebcal.HDate('25 Kislev');
+  var gregDate = hebDate.greg();
+  var hanukahMonth = gregDate.getMonth();
+  var hanukahDayOne = gregDate.getDate() - 1;
+  //Do not move outside function. Dont want to explain
+  //^Date of Hanukah is based on Hebrew calendar, this converts the date to gregorian calendar
+
+  //these two backgrounds are used multiple times, so made them variables
+  var hanukahBackground = "https://image.yayimages.com/1600/photo/happy-hanukkah-set-of-garlands-bunting-flags-collection-of-design-elements-decorations-for-a-jewish-holiday-isolated-on-white-background-vector-illustration-189767892.jpg"
+  var bday = "https://images.all-free-download.com/images/graphicthumb/balloon_ribbon_happy_birthday_background_544080.jpg";
+
+  var holidays = [ //month, day, message, backgroundimage url
+  //rember js months go 0 - 11, days are normal
+  //these are in literally no order sorry future me
+    [5, 16, "Happy birthday Jay!", bday], //0
+    [0, 24, "Happy birthday Dad!", bday], //1
+    [7, 11, "Happy birthday Becca!", bday], //2
+    [7, 31, "Happy birthday Mom!", bday], //3
+    [9, 31, "Happy halloween!", "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9530d4fe-f387-4b23-aafc-29fadac350ef/dcpc0f1-89a94f8b-165d-46eb-9b5a-9a3826b8e6bf.png/v1/fill/w_1600,h_1080,q_80,strp/halloween_background_free_for_use_by_zeonsniper_dcpc0f1-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOiIsImlzcyI6InVybjphcHA6Iiwib2JqIjpbW3siaGVpZ2h0IjoiPD0xMDgwIiwicGF0aCI6IlwvZlwvOTUzMGQ0ZmUtZjM4Ny00YjIzLWFhZmMtMjlmYWRhYzM1MGVmXC9kY3BjMGYxLTg5YTk0ZjhiLTE2NWQtNDZlYi05YjVhLTlhMzgyNmI4ZTZiZi5wbmciLCJ3aWR0aCI6Ijw9MTYwMCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.rXk1Ao9L40vNuDgp3LAsx8Y9J5cHUY7iTrD75B6bkpA"],
+    [6, 4,  "Happy 4th of July!", "https://static.vecteezy.com/system/resources/previews/000/057/127/non_2x/patriotic-fireworks-background-vector.jpg"],
+    [1, 14, "Happy Valentine's Day!", "https://www.publicdomainpictures.net/pictures/250000/velka/valentines-day-background-15162385503id.jpg"],
+    [hanukahMonth, hanukahDayOne, "Happy Hanukah! (Day 1)", hanukahBackground], //7
+    [hanukahMonth, hanukahDayOne + 1, "Happy Hanukah! (Day 2)", hanukahBackground], //8
+    [hanukahMonth, hanukahDayOne + 2, "Happy Hanukah! (Day 3)", hanukahBackground],
+    [hanukahMonth, hanukahDayOne + 3, "Happy Hanukah! (Day 4)", hanukahBackground],//10
+    [hanukahMonth, hanukahDayOne + 4, "Happy Hanukah! (Day 5)", hanukahBackground],
+    [hanukahMonth, hanukahDayOne + 5, "Happy Hanukah! (Day 6)", hanukahBackground],//12
+    [hanukahMonth, hanukahDayOne + 6, "Happy Hanukah! (Day 7)", hanukahBackground],
+    [hanukahMonth, hanukahDayOne + 7, "Happy Hanukah! (Day 8)", hanukahBackground],//14
+    [10, stupidDates("November", "4", 21 ), "Happy Thanksgiving!", "https://i.pinimg.com/originals/cb/c9/fb/cbc9fbc60a5251a28457d2080d956a54.jpg"],
+    [5, stupidDates("June", "0", 14), "Happy Father's Day!", "https://wallpaperplay.com/walls/full/1/b/2/254559.jpg"],//16
+    [4, stupidDates("May", "0", 7), "Happy Mother's Day!", "https://img5.goodfon.com/wallpaper/nbig/4/92/liubov-tsvety-serdtse-love-wood-pink-flowers-romantic-hearts.jpg"],
+  ];
+
+
+  for (let i = 0; i < holidays.length; i++){//checks current date against all holiday dates
+    if (holidays[i][0] == date.getMonth() && holidays[i][1] == date.getDate()){
+      $("body").css("background-image", 'url(' + holidays[i][3] + ')');
+      $("#header").text(holidays[i][2]);
+      return true//this is so the else statement does not get executed on the next iteration
+    }
+  else {  $("body").css("background-image", "none");
+    $("#header").text("Temperatures");}
+  }
+  return false //so the background changing 110+ does not override holidays
+};//func end
+
+callAllTempsInitial();
+setInterval(function () {callAllTemps()}, 10000); //updates every 10 sec after that
+sunMoon();
+setInterval(function () {sunMoon()}, 1000000);//every ten minutes (approximetly)
+holiday();
+setInterval(function() {holiday()}, 14400000); //every few hours
+</script>
+</html>
